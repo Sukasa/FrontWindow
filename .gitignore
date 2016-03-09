@@ -17,7 +17,6 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
-[Pp]ackages/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
@@ -83,6 +82,7 @@ $tf/
 _ReSharper*/
 *.[Rr]e[Ss]harper
 *.DotSettings.user
+*.DotSettings
 
 # JustCode is a .NET coding addin-in
 .JustCode
