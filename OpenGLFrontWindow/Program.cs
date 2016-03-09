@@ -1,16 +1,19 @@
 ﻿using OpenGLFrontWindow.Panes;
+using OpenGLFrontWindow.Properties;
+using STOMP.Frames;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using STOMP;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Drawing;
 using System.Windows.Forms;
+using uPLibrary.Networking.M2Mqtt;
+using uPLibrary.Networking.M2Mqtt.Messages;
 
 namespace OpenGLFrontWindow
 {
@@ -18,8 +21,10 @@ namespace OpenGLFrontWindow
     {
         public static ConfigurationData Configuration = new ConfigurationData();
         public static GameWindow Window;
+        public static STOMPClient StompClient;
+        public static MqttClient MQTTClient;
 
-        private int UseScreen = OpenGLFrontWindow.Properties.Settings.Default.Monitor;
+        private int UseScreen = Settings.Default.Monitor;
         private List<PaneBase> Panes;
 
         static internal int SamplerId;
@@ -44,6 +49,9 @@ namespace OpenGLFrontWindow
             Configuration.Width = Screen.AllScreens[UseScreen].Bounds.Width;
             Configuration.Height = Screen.AllScreens[UseScreen].Bounds.Height;
 
+            //Init window resources
+            PaneBase.LoadWindowResources();
+            
             // Init OpenGL
             Window = new GameWindow(Configuration.Width, Configuration.Height, new GraphicsMode(), "", GameWindowFlags.Fullscreen, DisplayDevice.GetDisplay((DisplayIndex)UseScreen));
             Window.RenderFrame += Render;
@@ -59,11 +67,28 @@ namespace OpenGLFrontWindow
                                                            .OrderBy(x => x.ZIndex)
                                                            .ToList();
 
-            // Init event bus protocol
+            // Init event bus protocol(s)
+            MQTTClient = new MqttClient("mqtt://MQTTHost");
+            MQTTClient.Connect("frontWindowDisplay");
+            MQTTClient.Subscribe(new string[] { "token/events/string/here" }, new byte[] { 0 });
+            MQTTClient.MqttMsgPublishReceived += MQTT_MessageReceived;
 
+            StompClient = new STOMPClient("stomp://StompHost");
+            StompClient.Subscribe("Token Events");
+            StompClient.MessageReceived += StompClient_MessageReceived;
 
             // Start operation
             Window.Run(60, 60);
+        }
+
+        void MQTT_MessageReceived(object sender, MqttMsgPublishEventArgs e)
+        {
+            //Panes.ForEach(x => x.Event(e));
+        }
+
+        void StompClient_MessageReceived(object sender, StompMessageEventArgs e)
+        {
+            Panes.ForEach(x => x.Event(e));
         }
 
         void Render(object sender, FrameEventArgs e)
@@ -80,16 +105,14 @@ namespace OpenGLFrontWindow
             // Bind shader program
             GL.UseProgram(ShaderProgramId);
 
-            foreach (PaneBase Pane in Panes)
-                Pane.Render();
+            Panes.ForEach(x => x.Render());
 
             Window.SwapBuffers();
         }
 
         void Tick(object sender, FrameEventArgs e)
         {
-            foreach (PaneBase Pane in Panes)
-                Pane.Tick();
+            Panes.ForEach(x => x.Tick());
         }
 
         void InitRenderer()
@@ -120,9 +143,6 @@ namespace OpenGLFrontWindow
 
             // Compile shaders
             ShaderProgramId = BuildProgram(File.ReadAllText("Shaders/Shader.vert"), File.ReadAllText("Shaders/Shader.frag"));
-
-            // Set up vertex attributes
-            BindVertexAndUniforms();
         }
 
         private int CompileShader(string ShaderCode, ShaderType Type)
