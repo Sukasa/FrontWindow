@@ -374,14 +374,12 @@ public class Twilight2
         //
         //
         double mjd = GetJulianDate(dt, 0);
-        double sglong, sglat, cglat, date, ym, yz, utrise = 0, utset = 0;
-        double yp, nz, hour, xe, ye, z1, z2, iobj, rads = 0.0174532925;
+        double sglat, cglat, date, ym, yz, utrise = 0, utset = 0;
+        double yp, nz, hour, xe, ye, z1, z2, rads = 0.0174532925;
  
         bool rise, sett, above;
         double[] quadout = new double[4];
         double[] sinho = new double[4];
-        string always_up = " ****";
-        string always_down = " ....";
         string outstring = "";
         //
         //  Set up the array with the 4 values of sinho needed for the 4
@@ -536,14 +534,12 @@ public class Twilight2
  
         double mjd = GetJulianDate(dt, 0);
  
-        double sglong, sglat, sinho, cglat, date, ym, yz, utrise, utset, j;
-        double yp, nz, hour, z1, z2, xe, ye, iobj, rads = 0.0174532925;
+        double sglat, sinho, cglat, date, ym, yz, utrise, utset;
+        double yp, nz, hour, z1, z2, xe, ye, rads = 0.0174532925;
  
         bool rise, sett, above;
         double[] quadout = new double[4];
         //var sinho;
-        string always_up = " ****";
-        string always_down = " ....";
         string outstring = "";
  
         sinho = Math.Sin(rads * 8 / 60);        //moonrise taken as centre of moon at +8 arcmin
